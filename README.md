@@ -6,6 +6,17 @@ Recommendation engine based on estimate the sentiment of comments and personalis
 ## Goal
 Build a Recommendation System with publically available Airbnb data from Ottawa. This will mean being able to recommend Airbnb listings to users based on their preferences.
 
+## Technologies
+
+* `streamlit`
+* `nltk SentimentIntensityAnalyzer`
+* `geopy`
+* `pandas`
+* `numpy`
+* `sklearn`
+* `scipy`
+
+
 ## Screenshots
 
 ![ss1](./ss/ss1.png)
