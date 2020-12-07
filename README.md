@@ -3,6 +3,8 @@ Airbnb booking :books: recommender system &amp; dashboard for Ottawa :memo:
 
 Recommendation engine based on estimate the sentiment of comments and personalised recommendations for each user based on their preferences.
 
+[Preview app](https://share.streamlit.io/dominikwozniak/airbnb-recommender-system/main/dashboard/app.py)
+
 ## Goal
 Build a Recommendation System with publically available Airbnb data from Ottawa. This will mean being able to recommend Airbnb listings to users based on their preferences.
 
