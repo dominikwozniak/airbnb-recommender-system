@@ -1,5 +1,8 @@
 import streamlit as st
 import pandas as pd
+from filters import get_filters, get_sub_filters, get_sub_sub_filters, get_filters_arrays
+from params import get_bedrooms, get_accommodates, get_amounts, get_bathrooms, get_beds, get_max_price
+from coefficients import DISTANCE_COEFF, NUMBER_OF_REVIEWS_COEFF, POLARITY_COEFF
 
 st.title('Znajdź mieszkanie dla siebie!')
 st.subheader('System rekomendacji mieszkań')
@@ -28,72 +31,23 @@ params = {
     'values_amount': st.sidebar.selectbox('Liczba wyszukań', ('wszystkie', 5, 10, 15, 20, 30)),
 }
 
-test_size = st.sidebar.slider('Maksymalna cena', 0, 2000, 100, step=5)
+price = st.sidebar.slider('Maksymalna cena', 0, 2000, 100, step=5)
 
 
+@st.cache(suppress_st_warning=True)
 def map_df(frame: pd.DataFrame) -> pd.DataFrame:
-    BEDROOMS = -1
-    BEDS = -1
-    ACCOMMODATES = -1
-    BATHROOMS = -1
-    MAX_PRICE = 100
+    bedrooms = get_bedrooms(params)
+    beds = get_beds(params)
+    accommodates = get_accommodates(params)
+    bathrooms = get_bathrooms(params)
+    max_price = get_max_price(price)
+    values = get_amounts(params)
 
-    if params['bedrooms'] != '-':
-        BEDROOMS = params['bedrooms']
-    if params['beds'] != '-':
-        BEDS = params['beds']
-    if params['bathrooms'] != '-':
-        BATHROOMS = params['bathrooms']
-    if params['accommodates'] != '-':
-        ACCOMMODATES = params['accommodates']
-    if params['values_amount'] == 'wszystkie':
-        VALUES = 10000000
-    else:
-        VALUES = params['values_amount']
+    filters = get_filters(bedrooms, beds, accommodates, bathrooms)
+    sub_filters = get_sub_filters(bedrooms, beds, accommodates, bathrooms)
+    sub_sub_filters = get_sub_sub_filters(bedrooms, beds, accommodates, bathrooms)
 
-    filters = {
-        'bedrooms': BEDROOMS,
-        'beds': BEDS,
-        'accommodates': ACCOMMODATES,
-        'bathrooms': BATHROOMS
-    }
-
-    sub_filters = {
-        'bedrooms': BEDROOMS + 1,
-        'beds': BEDS + 1,
-        'accommodates': ACCOMMODATES + 1,
-        'bathrooms': BATHROOMS + 1
-    }
-
-    sub_sub_filters = {
-        'bedrooms': BEDROOMS - 1,
-        'beds': BEDS - 1,
-        'accommodates': ACCOMMODATES - 1,
-        'bathrooms': BATHROOMS - 1
-    }
-
-    features_to_filter = []
-    features_no_filter = []
-
-    if BEDROOMS != -1:
-        features_to_filter.append('bedrooms')
-    else:
-        features_no_filter.append('bedrooms')
-
-    if BEDS != -1:
-        features_to_filter.append('beds')
-    else:
-        features_no_filter.append('beds')
-
-    if ACCOMMODATES != -1:
-        features_to_filter.append('accommodates')
-    else:
-        features_no_filter.append('accommodates')
-
-    if BATHROOMS != -1:
-        features_to_filter.append('bathrooms')
-    else:
-        features_no_filter.append('bathrooms')
+    features_to_filter, features_no_filter = get_filters_arrays(bedrooms, beds, accommodates, bathrooms)
 
     for feature in features_to_filter:
         if feature == 'bathrooms' or feature == 'beds':
@@ -104,13 +58,14 @@ def map_df(frame: pd.DataFrame) -> pd.DataFrame:
             frame = frame[
                 (frame[feature] == filters[feature]) | (frame[feature] == sub_filters[feature])]
 
-    frame = frame[frame['price'] <= MAX_PRICE]
+    frame = frame[frame['price'] <= max_price]
 
-    frame['classified'] = 3 * frame['scaled_polarity'] + 2 * frame['scaled_distance'] + 1 * frame['scaled_number_of_reviews']
+    frame['classified'] = POLARITY_COEFF * frame['scaled_polarity'] + DISTANCE_COEFF * frame['scaled_distance'] + NUMBER_OF_REVIEWS_COEFF * frame[
+        'scaled_number_of_reviews']
 
     frame = frame.sort_values(by=['classified'], ascending=False)
     st.write(f'Dopasowano **{frame.shape[0]}** mieszkań.')
-    frame = frame.head(VALUES)
+    frame = frame.head(values)
 
     return frame
 
@@ -121,10 +76,14 @@ def run_data():
     return data
 
 
-btn = st.sidebar.button("Szukaj")
-if btn:
+show_data = st.sidebar.checkbox('Pokaż szczegóły')
+search_btn = st.sidebar.button("Szukaj")
+
+if search_btn:
     data = run_data()
-    # data
-    st.dataframe(data=data, height=600)
+    if show_data:
+        st.dataframe(data=data, height=600)
+    else:
+        st.dataframe(data=data[['id', 'name', 'description', 'price']], height=600)
 else:
     pass
