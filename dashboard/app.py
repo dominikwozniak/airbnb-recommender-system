@@ -7,12 +7,15 @@ from coefficients import DISTANCE_COEFF, NUMBER_OF_REVIEWS_COEFF, POLARITY_COEFF
 st.title('Znajdź mieszkanie dla siebie!')
 st.subheader('System rekomendacji mieszkań')
 
+# Dane rzeczywiste -> https://ids-storage-football-prediction.s3-eu-west-1.amazonaws.com/data_mmwd/listings_scalled.csv
+# Dane wyliczone -> https://ids-storage-football-prediction.s3-eu-west-1.amazonaws.com/data_mmwd/listing_with_descision_tree_regression.csv
 
 @st.cache
 def load_data():
     df = pd.read_csv(
-        'https://ids-storage-football-prediction.s3-eu-west-1.amazonaws.com/data_mmwd/listings_scalled.csv',
-        index_col=['Unnamed: 0'])
+        './data/listing_with_descision_tree_regression.csv',
+        index_col=['Unnamed: 0']
+    )
     df = df[df['price'] > 0]
     df = df[df['bedrooms'] > 0]
     df = df[df['bathrooms'] > 0]
@@ -22,7 +25,6 @@ def load_data():
 df = load_data()
 
 st.sidebar.subheader('Opcje wyszukiwania')
-# Sidebar Options:
 params = {
     'bedrooms': st.sidebar.selectbox('Liczba sypialni', ('-', 1, 2, 3, 4, 5, 6)),
     'beds': st.sidebar.selectbox('Liczba łóżek', ('-', 1, 2, 3, 4, 5, 6, 7)),
@@ -60,10 +62,10 @@ def map_df(frame: pd.DataFrame) -> pd.DataFrame:
 
     frame = frame[frame['price'] <= max_price]
 
-    frame['classified'] = POLARITY_COEFF * frame['scaled_polarity'] + DISTANCE_COEFF * frame['scaled_distance'] + NUMBER_OF_REVIEWS_COEFF * frame[
-        'scaled_number_of_reviews']
+    # frame['classified'] = POLARITY_COEFF * frame['scaled_polarity'] + DISTANCE_COEFF * frame['scaled_distance'] + NUMBER_OF_REVIEWS_COEFF * frame[
+    #     'scaled_number_of_reviews']
 
-    frame = frame.sort_values(by=['classified'], ascending=False)
+    frame = frame.sort_values(by=['prediction_classified'], ascending=False)
     st.write(f'Dopasowano **{frame.shape[0]}** mieszkań.')
     frame = frame.head(values)
 
